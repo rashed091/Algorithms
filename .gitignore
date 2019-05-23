@@ -1,0 +1,6 @@
+.DS_Store
+
+assignments/.ipynb_checkpoints/*
+notebooks/.ipynb_checkpoints/*
+.ipynb_checkpoints/*
+.vscode/*
