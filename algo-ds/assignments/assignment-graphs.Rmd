@@ -1,0 +1,132 @@
+---
+title: "Algorithms and data structures"
+subtitle: "Programming assignment 4 -- Graphs"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: revealjs::revealjs_presentation
+bibliography: bibliography.bib
+csl: ieee.csl
+---
+
+```{r child="header.Rmd", include=FALSE}
+```
+
+Graphs are one of the most common data structures in computer science;
+graph-based modeling of problems is at the heart of many systems we use
+every day, such as routing in Google Maps or recommending friends on Facebook.
+
+[Social Network Analysis](https://en.wikipedia.org/wiki/Social_network_analysis)
+(SNA) is a branch of sociology that explores social structures through the use
+of analytical tools, such as graphs. In this assignment, you will implement
+basic social network analysis algorithms on a graph extracted from GitHub.
+
+You can find the graph data
+[at this link](https://drive.google.com/file/d/0B9Rx0uhucsroT1dzYjlfVU9nWUU/view?usp=sharing).
+The data looks like this (CSV format):
+
+```
+follower,followed
+1570,9236
+9236,1570
+13256,9236
+9236,13256
+13256,1570
+1570,13256
+```
+
+If we take the first line, it means that user `1570` follows user `9236`.
+
+## Loading the graph
+
+**T (10 points):** Write a function that takes as input a file name and
+loads the data into an adjacency list representation.
+
+```python
+def load(graph_file='github.graph'):
+  """
+    Loads the data from the file in the provided argument into an in-memory
+    graph (as an adjacency list)
+  """
+  pass
+```
+
+From now on, you must use the graph returned by `load` in all the assignments
+below.
+
+## Basic graph metrics
+
+**T (10 points):** Who are the 10 most connected users?
+
+```python
+def most_connected(graph, n = 10):
+  """
+    Returns the ids of the top-n most connected users
+  """
+  pass
+```
+
+_Hint_: it helps if you first define a method called `in_degree` that calculates
+the number of incoming edges in to a node.
+
+**T (10 points):** What is the mean and what is the median number of connections?
+
+## Computing shortest paths
+
+Shortest paths are the basis for many network measures. You will need to implement Dijkstra algorithm.
+
+**T (20 points):** Write a function that computes the shortest paths
+between all node pairs in the graph. 
+
+```python
+def shortest_paths(graph):
+  """
+  Computes the shortest paths between any pair of nodes in the graph
+  
+  @return A dictionary whose keys are node pairs and values are sequences
+  indicating the shortest path between the node pair.
+  """
+  pass
+```
+
+_Hint_: Choose the appropriate shortest path algorithm for undirected graph
+with no edge weights. A pair of nodes $(n_1, n_2)$ is, for our purposes,
+equivalent to the pair $(n_2, n_1)$.
+
+_Hint_: How to find all unique node pairs? Given that you create a non-duplicate
+list of all your nodes, you can use Python's `itertools.combinations` function 
+like so:
+
+```{python}
+from itertools import combinations
+a = [1,2,3,4,5]
+pairs = list(combinations(a, 2))
+print pairs
+```
+
+## Ranking important users
+
+One of the primary uses of SNA is to identify important/influencial nodes.
+A typical metric we use to quantify the importance of a node is centrality.
+Several [centrality measures](https://en.wikipedia.org/wiki/Centrality) 
+exist; for our purposes it is enough to calculate the **Betweeness Centrality**
+of each node. The pseudocode to calculate it is given below.
+
+To compute the betweenness of a node $n$
+
+1. For each pair of nodes $(v1, v2)$, compute the shortest paths between them
+2. For each pair of nodes $(v1, v2)$ determine the fraction of shortest paths
+that include $n$
+3. Sum this fraction over all pairs of vertices $(v1, v2)$
+
+**T (30 points):** Write a function that computes the Betweenness centrality for
+all nodes in the provided network
+
+```python
+def betweenness(graph):
+  pass
+```
+
+**T (10 points):** Use the function above to rank the nodes (users) in
+terms of importance.
+
+```{r child="footer.Rmd", include=FALSE}
+```

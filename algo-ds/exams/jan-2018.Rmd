@@ -1,0 +1,368 @@
+---
+title: "TI3110TU -- Exam January 2018"
+author: "Georgios Gousios"
+date: "31/01/2018"
+output:
+  pdf_document:
+    latex_engine: lualatex
+    md_extensions: ['+fancy_lists', '+startnum']
+---
+
+**Name:**
+
+**Student Number:**
+
+# Instructions
+
+* Before you start, write down your name and student number on this page.
+On all the following pages, write your student number at the top of the page.
+* When you are asked to provide implementations, you should do that in
+Python. Your code should be generally correct, minor omissions
+can be tolerated, as long as the algorithm is appropriate.
+* The use of material (book, slides, laptop, etc.) during the exam is not allowed.
+* Use the provided paper for notes etc. Don't write on the exam paper.
+* **Write clearly!** If your writing cannot be deciphered, it will not be
+considered for grading.
+
+The total number of points is **75**. The total number of points you need
+to collect to get a 10 is **70**. The total number of points you need to collect
+to pass is **40**.
+
+You have **180** minutes: _Good Luck!_
+
+# Exam questions
+
+1. (**4 points**) What is the divide and conquer (D&C) algorithmic technique? 
+Describe an algorithm (no need to show its implementation) that uses D&C 
+and present its evaluation strategy.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+2. (**4 points**) A typical problem with recursion is stack overflow errors.
+Write an (any!) function that will overflow and then re-write it so that it does
+not.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+3. (**4 points**) Rewrite the Fibonacci algorithm given below so that
+each individual recursion branch is only executed once.
+
+```python
+def fib(x):
+    if x == 0: return 0
+    elif x == 1: return 1
+    else: return fib(x - 2) + fib(x - 1)
+```
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+4. (**20 points**) Write a _class_ that implements a singly linked list that 
+stores integers, using the following prototype (each correct function
+implementation is worth 5 points):
+
+```python
+class IntList(object):
+
+    # Constructs an empty list
+    def __init__(self):
+      pass
+
+    # Adds a element to the list
+    def add(self, val):
+      pass
+
+    # Removes all elements equal to val
+    def remove(self, val):
+      pass
+
+    # Prints the list like a Python array
+    def __str__(self):
+      pass
+```
+
+Here is an example usage scenario for it:
+
+```python
+> a = IntList()
+> print a
+[ ]
+> a.add(5)
+> a.add(10)
+> print a
+[ 5, 10 ]
+> a.add(15)
+> a.add(5)
+> print(a)
+[ 5, 10, 15, 5 ]
+> a.remove(5)
+> print(a)
+[ 10, 15 ]
+```
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+5. (**2 points**) Explain the differences in the working characteristics of
+data structures backed by arrays vs data structures backed by linked lists.
+When is each implementation preferable?
+
+```
+
+
+
+
+
+
+
+
+
+```
+
+6. (**2 points**) How does the Knuth-Morris-Pratt work and why is it faster
+than naive string search?
+
+```
+
+
+
+
+
+
+
+
+
+```
+
+7. (**4 points**) Calculate the jump table used by the Knuth-Morris-Pratt 
+algorithm, for the search pattern $P=12332112$. Describe the algorithm you
+used (in pseudocode or Python).
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+8. (**6 points**) Write a recursive implementation of `quicksort`.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+9. (**4 points**) Describe 2 ways in which we can represent graphs in memory.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+10. (**6 points**) Given a set of web sites, we need to decide on how to split
+our advertising budget. One idea is to put most of our money on sites 
+that have many incoming links, as the propability of users visiting them 
+will be higher. 
+In our servers, we keep a full copy of the home page of each web site.
+Describe a potential data structure/algorithm combination to
+use in order to calculate the budget distribution.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+11. (**2 points**) What is topological sorting for graphs? Describe a use case
+for it.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```
+
+12. (**2 points**) Why do we need optimization algorithms? Describe a problem
+that is best solved using any optimization technique.
+
+```
+
+
+
+
+
+
+
+
+
+```
+
+13. (**15 points**) What is the time complexity ($O$) of the following operations?
+
+  * (**1 point**) Adding an element to the head of a linked list: 
+  * (**1 point**) Adding an element to a set backed by an array: 
+  * (**1 point**) Inserting an element in a list by index:
+  * (**1 point**) Inserting in a AVL (balanced binary) tree:
+  * (**1 point**) Searching through a sorted array with binary search:
+  * (**1 point**) Sorting an array with quicksort:
+  * (**1 point**) Sorting an array with mergesort:
+  * (**1 point**) Recursive version of least common subsequence:
+  * (**1 point**) Breadth-first search in a graph:
+  * (**1 point**) Breadth-first search in a balanced tree:
+  * (**1 point**) Naive substring search (searching a pattern within a text):
+  * (**1 point**) Knutt-Moris-Pratt substring search:
+  * (**1 point**) Sorting an array with bubble sort:
+  * (**1 point**) Deleting elements by value in a list:
+  * (**1 point**) Deleting elements by value in a AVL tree:
