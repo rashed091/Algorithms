@@ -1,16 +1,5 @@
-from functools import cmp_to_key
+N, K = tuple(map(int, input().split()))
+A = list(map(int, input().split()))
 
-k = 6
-random = [12, 18, 17, 67, 46]
-
-
-# def compare(i, j):
-#     if j % k == i % k:
-#         return j < i
-#     return j % k < i % k
-
-
-# print(sorted(random, key=cmp_to_key(compare)))
-
-
-print(random.sort())
+A.sort(key=lambda x: x % K)
+print(*A, sep=" ")

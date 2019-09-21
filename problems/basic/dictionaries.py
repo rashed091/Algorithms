@@ -1,5 +1,4 @@
-from collections import defaultdict
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict, Counter
 
 
 pairs = {('a', 1), ('b', 2), ('c', 3)}
@@ -13,17 +12,39 @@ for key, value in pairs:
 print(d1)
 
 
-d2 = defaultdict(list)
-
-for key, value in pairs:
-    d2[key].append(value)
-
-d2['a'].append(5)
-
-print(d2)
+# ----------------- The defaultdict --------------------------->
+nums = defaultdict(int)
+nums['one'] = 1
+nums['two'] = 2
+print(nums['three'])
 
 
-d3 = OrderedDict(pairs)
+count = defaultdict(int)
+names_list = "Mike John Mike Anna Mike John John Mike Mike Britney Smith Anna Smith".split()
+for names in names_list:
+    count[names] += 1
+print(count)
 
-for key in d3.keys():
-    print(key, d3[key])
+
+lst = defaultdict(list)
+lst[0].append(1)
+lst[1].append(3)
+print(lst)
+
+
+#----------------------------- The OrderedDict -----------------------------#
+od = OrderedDict()
+od['a'] = 1
+od['b'] = 2
+od['c'] = 3
+print(od)
+
+for key, value in od.items():
+    print(key, value)
+
+
+lst = ["a", "c", "c", "a", "b", "a", "a", "b", "c"]
+cnt = Counter(lst)
+od = OrderedDict(cnt.most_common())
+for key, value in od.items():
+    print(key, value)
