@@ -1,6 +1,7 @@
 from itertools import *
-from operator import *
+import operator
 import random
+import collections
 
 
 def take(n, iterable):
