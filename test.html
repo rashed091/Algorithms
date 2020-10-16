@@ -1,0 +1,1019 @@
+<h2 id="orgfadfd6b"><span class="section-number-2">1</span> C++ IO Input and Output System</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-org2169d66" class="outline-3">
+<h3 id="org2169d66"><span class="section-number-3">1.1</span> Process Inputs, Outputs and States</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Any process may have the following inputs, outputs and states: 
+</p>
+
+
+<p>
+<b>Some Processes States:</b>
+</p>
+
+<ul class="org-ul">
+<li><span class="underline">Native executable</span> used for creating the process. Every
+process has a native executable. A python process is the Python
+interpreter (python.exe on Windows) running python scripts. A Java
+process is the Java virtual machine (java.exe) running java
+*.class bytecodes or *.jar java packages.</li>
+
+<li><span class="underline">CWD</span> =&gt; Current Working Directory
+<ul class="org-ul">
+<li>There is a single current working directory for every
+process. On Unix, the functions <a href="https://pubs.opengroup.org/onlinepubs/9699919799/functions/getcwd.html">getcwd()</a> and <a href="http://man7.org/linux/man-pages/man2/chdir.2.html">chdir()</a> gets and
+sets the current working directory.</li>
+</ul></li>
+
+<li><span class="underline">IP</span> =&gt; Instruction Pointer (process context) =&gt; CPU registry that
+stores the current machine instruction to be run.</li>
+
+<li><span class="underline">SP</span> =&gt; Stack Poitner (process context) =&gt; CPU registry used for
+keeping track of the process call stack.</li>
+
+<li>Note: all thoses states can be viewed and manipulated with a
+debugger, such as GDB, LLDB or Windows Debugger. A debugger can
+monitor, explore and manipulate the virtual memory of any process.</li>
+</ul>
+
+<p>
+<b>Inputs:</b>
+</p>
+
+<ul class="org-ul">
+<li><span class="underline">Stdin</span> (Standard Input) =&gt; User input read from console in some
+shell (cmd.exe on Windows) or bash, zsh on Unix-like OSes.</li>
+
+<li>Command line argument passed to main function</li>
+
+<li>Environment variables set during the process instantiation with env
+or export commands on Unix-like operating systems.</li>
+
+<li>Configuration files =&gt; read at a default fixed location such as
+<code>/.bashrc (bash configuration file at ~/home/user/.bashrc/</code> on Linux
+); ~/.vimrc (vim configuration file)</li>
+
+<li>Windows Registry entry for configuration during process
+initialization</li>
+
+<li>Input files read after initialization.</li>
+</ul>
+
+<p>
+<b>Outputs:</b>
+</p>
+
+<ul class="org-ul">
+<li><span class="underline">Stdout</span> (Standard Output) =&gt; Process output print by functions such
+as printf; std::cout &lt;&lt; &#x2026; visible in a terminal. (Unix heritage)</li>
+
+<li><span class="underline">Stderr</span> (Standard Error Ouput) =&gt; Process error or logging output
+print by default in a terminal. stderr exists for allowing
+separating the output (stdout) from the error or logging output (stderr).</li>
+
+<li>Statuds code =&gt; Value returned by function <span class="underline">int main(int argc, char** argv)</span>
+<ul class="org-ul">
+<li>Value 0 indicates success and that the process terminated
+successfuly.</li>
+<li>Value different than zero indicates that the process terminated
+with errors.</li>
+</ul></li>
+
+<li>Output file(s)</li>
+</ul>
+
+<p>
+<b>Both Input/Output:</b>
+</p>
+
+<ul class="org-ul">
+<li>Sockets</li>
+
+<li>IPC Inter Process Communication</li>
+
+<li>GUI - Graphical User Interface</li>
+</ul>
+
+
+<div class="org-src-container">
+<pre class="src src-text">         Command line arguments            
+         int arc, char** argv (input)                  Configuration file: 
+           &gt;&gt;-------+                         +--&lt;&lt;--  Input file read at fixed location
+                     \                       /         Or Windows Registry entry 
+                      \                      |
+                      |                      |    
+                      \/                    \ /   
+                     +---------------------------------+
+                     |   Process:                      |      
+                     |                                 +---------&gt;&gt; Stdout (output)
+         ----------&gt;&gt;|     EXE = /bin/some/executable  |            
+       Stdin (input) |     PID = 9381 (Unique ID)      +---------&gt;&gt; Stderr (output)
+                     |     CWD = /home/user/some/data  |       
+                     |                                 |
+                     |     IP - Instruction Pointer    +---------&gt;&gt;&gt; Process status code: (output)
+         ----------&gt;&gt;|     SP - Stack pointer          |    
+Environment          +-----------------------+--------+    int main(int argc, char** argv)
+Variables (input)                            |              {
+                                             |                  .... ... ...
+export PATH=$PATH:/opt/bin/program/bin       |                  int status_code = 0 
+export APP_LOG_LEVEL=INFO                    |                  return status_code;
+                                            \ /              }
+                                      Output File 
+</pre>
+</div>
+
+<p>
+<b>Example: View Process Information on Linux</b> 
+</p>
+
+<p>
+All mentioned process internal states can be viewed with a debugger
+such as GDB (GNU Debugger). On Linux, they can also be accessed with
+the <b>/proc</b> pseudo-file system created by the Linux kernel which exposes
+many processes informations. 
+</p>
+
+<p>
+Example: View information about the process which the PID is <b>19529</b> 
+</p>
+
+<ul class="org-ul">
+<li>Start a Kotlin REPL process and get a PID:</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-java">$ kotlinc-jvm
+Welcome to Kotlin version 1.3.50 <span class="org-rainbow-delimiters-depth-1">(</span>JRE 1.8.0_162-b12<span class="org-rainbow-delimiters-depth-1">)</span>
+<span class="org-function-name">Type</span> :help <span class="org-keyword">for</span> help, :quit <span class="org-keyword">for</span> quit
+&gt;&gt;&gt; 
+&gt;&gt;&gt; <span class="org-constant">java</span>.<span class="org-constant">lang</span>.<span class="org-constant">management</span>.ManagementFactory.getRuntimeMXBean<span class="org-rainbow-delimiters-depth-1">()</span>.getName<span class="org-rainbow-delimiters-depth-1">()</span>
+<span class="org-function-name">res1</span>: <span class="org-constant">kotlin</span>.String<span class="org-negation-char">!</span> = 23127@localhost.localdomain
+&gt;&gt;&gt; 
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Proc-File system for PID <span class="underline">23127</span></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ ls /proc/23127
+attr/       cmdline          loginuid       personality   statm
+fd/         comm             maps           projid_map    status
+fdinfo/     coredump_filter  mem            root@         syscall
+map_files/  cpuset           mountinfo      sched         timers
+net/        cwd@             mounts         schedstat     timerslack_ns
+ns/         environ          mountstats     sessionid     uid_map
+task/       exe@             numa_maps      setgroups     wchan
+autogroup   gid_map          oom_adj        smaps
+auxv        io               oom_score      smaps_rollup
+cgroup      latency          oom_score_adj  stack
+clear_refs  limits           pagemap        stat
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Get process executable: 
+<ul class="org-ul">
+<li>File: <span class="underline">/proc/&lt;PID&gt;/exe</span> is a symbolic link to the process' native executable.</li>
+</ul></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ readlink /proc/23127/exe 
+/home/archbox/opt/java/bin/java
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Get process current directory:
+<ul class="org-ul">
+<li>File: <span class="underline">/proc/&lt;PID&gt;/cwd</span> is a symbolic link to process' current directory.</li>
+</ul></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ readlink /proc/23127/cwd
+/home/archbox/projects/appdroid/build
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Get command line arguments used to start the process.
+<ul class="org-ul">
+<li>File: <span class="underline">/proc/&lt;PID&gt;/cmdline</span> contains the command line arguments
+used to start the process, passed to main(int argc, char** argv).</li>
+</ul></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ cat /proc/23127/cmdline | strings -1
+
+/home/archbox/opt/java/bin/java
+-Xmx256M
+-Xms32M
+-noverify
+-cp
+/home/archbox/.sdkman/candidates/kotlin/1.3.50/lib/kotlin-preloader.jar
+org.jetbrains.kotlin.preloading.Preloader
+-cp
+/home/archbox/.sdkman/candidates/kotlin/1.3.50/lib/kotlin-compiler.jar
+org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>Get process environment variables.
+<ul class="org-ul">
+<li>File: <span class="underline">/proc/&lt;PID&gt;/environ</span> contains process' environment
+variables.</li>
+</ul></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ cat /proc/23127/environ | strings -1
+
+<span class="org-variable-name">QTINC</span>=/usr/lib64/qt-3.3/include
+<span class="org-variable-name">LC_ALL</span>=en_US.UTF-8
+...    ...    ...    ...    ... 
+...    ...    ...    ...    ... 
+<span class="org-variable-name">USERNAME</span>=archbox
+<span class="org-variable-name">JAVA_HOME</span>=/home/archbox/opt/java
+<span class="org-variable-name">KDEDIRS</span>=/usr
+<span class="org-variable-name">KOTLIN_HOME</span>=/home/archbox/.sdkman/candidates/kotlin/1.3.50
+<span class="org-variable-name">XDG_VTNR</span>=2
+<span class="org-variable-name">SSH_AUTH_SOCK</span>=/tmp/ssh-7z2L0gyqQeeP/agent.3961
+<span class="org-variable-name">ROOTSYS</span>=/home/archbox/opt/root
+<span class="org-variable-name">XDG_SESSION_ID</span>=2
+<span class="org-variable-name">MODULES_CMD</span>=/usr/share/Modules/libexec/modulecmd.tcl
+<span class="org-variable-name">ENV</span>=/usr/share/Modules/init/profile.sh
+<span class="org-variable-name">DESKTOP_SESSION</span>=lxqt
+<span class="org-variable-name">IMSETTINGS_MODULE</span>=none
+<span class="org-variable-name">PWD</span>=/home/archbox/projects/appdroid/build
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>List all process' file descriptors.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ ls /proc/23127/fd
+0@  10@  12@  14@  16@  18@  2@   21@  24@  28@  3@   31@  4@  6@  8@
+1@  11@  13@  15@  17@  19@  20@  22@  27@  29@  30@  33@  5@  7@  9@
+
+$ ls -l /proc/23127/fd
+total 0
+lrwx------ 1 archbox archbox 64 Nov  4 12:11 0 -&gt; /dev/pts/4
+lrwx------ 1 archbox archbox 64 Nov  4 12:11 1 -&gt; /dev/pts/4
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 10 -&gt; /home/archbox/.sdkman/candidates/kotlin/1.3.50/lib/kotlin-script-runtime.jar
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 11 -&gt; /home/archbox/.sdkman/candidates/kotlin/1.3.50/lib/trove4j.jar
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 12 -&gt; /home/archbox/opt/java/jre/lib/jsse.jar
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 13 -&gt; /dev/random
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 14 -&gt; /dev/urandom
+... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... 
+... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... ... 
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 8 -&gt; /home/archbox/.sdkman/candidates/kotlin/1.3.50/lib/kotlin-stdlib.jar
+lr-x------ 1 archbox archbox 64 Nov  4 12:11 9 -&gt; /home/archbox/.sdkman/candidates/kotlin/1.3.50/lib/kotlin-reflect.jar
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>List shared libraries loaded by process: <a href="https://stackoverflow.com/questions/5103443/how-to-check-what-shared-libraries-are-loaded-at-run-time-for-a-given-process">(Reference 5103443)</a></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ cat /proc/23127/maps | awk <span class="org-string">'{print $6}'</span> | grep <span class="org-string">'\.so'</span> | sort | uniq
+
+/home/archbox/opt/java/jre/lib/amd64/libjava.so
+/home/archbox/opt/java/jre/lib/amd64/libmanagement.so
+...    ...    ...    ...    ...    ... 
+...    ...    ...    ...    ...    ... 
+/usr/lib64/libc-2.27.so
+/usr/lib64/libdl-2.27.so
+/usr/lib64/libm-2.27.so
+/usr/lib64/libnss_files-2.27.so
+/usr/lib64/libpthread-2.27.so
+/usr/lib64/librt-2.27.so
+/usr/lib64/libutil-2.27.so
+</pre>
+</div>
+
+<p>
+See also: 
+</p>
+
+<ul class="org-ul">
+<li><a href="http://man7.org/linux/man-pages/man5/proc.5.html">proc(5) - Linux manual page</a></li>
+
+<li><a href="https://www.tecmint.com/exploring-proc-file-system-in-linux/">Exploring /proc File System in Linux</a></li>
+
+<li><a href="https://www.geeksforgeeks.org/proc-file-system-linux/">proc file system in Linux - GeeksforGeeks</a></li>
+
+<li><a href="https://medium.com/@holdengrissett/linux-101-how-to-hack-your-process-memory-2514a3d0778d">Linux 101: How to hack your process’ memory - Holden Grissett - Medium</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgcf5e314" class="outline-3">
+<h3 id="orgcf5e314"><span class="section-number-3">1.2</span> Environment Variables for Program Configuration</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Environment variables are available in most operating systems such as
+Linux, MacOSx, BSD and Windows. They can be used for setting program
+configuration at initialization.
+</p>
+
+<p>
+See: 
+</p>
+<ul class="org-ul">
+<li><a href="https://en.wikipedia.org/wiki/Environment_variable">Environment variable - Wikipedia</a></li>
+<li><a href="https://docs.microsoft.com/en-us/windows/win32/procthread/environment-variables">Environment Variables - Windows applications | Microsoft Docs</a></li>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-read-and-set-environmental-and-shell-variables-on-a-linux-vps">How To Read and Set Environmental and Shell Variables on a Linux VPS | DigitalOcean</a></li>
+<li><a href="https://opensource.com/article/19/8/what-are-environment-variables">What are environment variables in Bash? | Opensource.com</a></li>
+<li><a href="https://wiki.archlinux.org/index.php/Environment_variables">Environment variables - ArchWiki</a></li>
+</ul>
+
+<p>
+File: envvar.cpp 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-preprocessor">#include</span> <span class="org-string"><span class="org-rainbow-delimiters-depth-1">&lt;</span></span><span class="org-string">iostream</span><span class="org-string"><span class="org-rainbow-delimiters-depth-1">&gt;</span></span>
+<span class="org-preprocessor">#include</span> <span class="org-string"><span class="org-rainbow-delimiters-depth-1">&lt;</span></span><span class="org-string">string</span><span class="org-string"><span class="org-rainbow-delimiters-depth-1">&gt;</span></span>
+
+<span class="org-keyword">template</span><span class="org-rainbow-delimiters-depth-1">&lt;</span><span class="org-keyword">typename</span> <span class="org-type">T</span><span class="org-rainbow-delimiters-depth-1">&gt;</span>
+<span class="org-type">T</span>
+<span class="org-function-name">get_env_value</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-constant">std</span>::<span class="org-type">string</span> <span class="org-keyword">const</span>&amp; <span class="org-variable-name">name</span>, <span class="org-type">T</span> <span class="org-variable-name">default_value</span><span class="org-rainbow-delimiters-depth-1">)</span>;
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Template specialization for std::string</span>
+<span class="org-keyword">template</span><span class="org-rainbow-delimiters-depth-1">&lt;&gt;</span>
+<span class="org-function-name">std</span>::<span class="org-type">string</span>
+<span class="org-function-name">get_env_value</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-constant">std</span>::<span class="org-type">string</span> <span class="org-keyword">const</span>&amp; <span class="org-variable-name">name</span>, <span class="org-constant">std</span>::<span class="org-type">string</span> <span class="org-variable-name">default_value</span><span class="org-rainbow-delimiters-depth-1">)</span>
+<span class="org-rainbow-delimiters-depth-1">{</span>
+    <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">p</span> = <span class="org-constant">std</span>::getenv<span class="org-rainbow-delimiters-depth-2">(</span>name.c_str<span class="org-rainbow-delimiters-depth-3">()</span><span class="org-rainbow-delimiters-depth-2">)</span>;
+    <span class="org-keyword">if</span><span class="org-rainbow-delimiters-depth-2">(</span>p == <span class="org-constant">nullptr</span><span class="org-rainbow-delimiters-depth-2">)</span> <span class="org-rainbow-delimiters-depth-2">{</span> <span class="org-keyword">return</span> default_value; <span class="org-rainbow-delimiters-depth-2">}</span>
+    <span class="org-keyword">return</span> p;
+<span class="org-rainbow-delimiters-depth-1">}</span>
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Template specialization for size_t</span>
+<span class="org-keyword">template</span><span class="org-rainbow-delimiters-depth-1">&lt;&gt;</span>
+<span class="org-type">size_t</span>
+<span class="org-function-name">get_env_value</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-constant">std</span>::<span class="org-type">string</span> <span class="org-keyword">const</span>&amp; <span class="org-variable-name">name</span>, <span class="org-type">size_t</span> <span class="org-variable-name">default_value</span><span class="org-rainbow-delimiters-depth-1">)</span>
+<span class="org-rainbow-delimiters-depth-1">{</span>
+    <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">p</span> = <span class="org-constant">std</span>::getenv<span class="org-rainbow-delimiters-depth-2">(</span>name.c_str<span class="org-rainbow-delimiters-depth-3">()</span><span class="org-rainbow-delimiters-depth-2">)</span>;
+    <span class="org-keyword">if</span><span class="org-rainbow-delimiters-depth-2">(</span>p == <span class="org-constant">nullptr</span><span class="org-rainbow-delimiters-depth-2">)</span> <span class="org-rainbow-delimiters-depth-2">{</span> <span class="org-keyword">return</span> default_value; <span class="org-rainbow-delimiters-depth-2">}</span>
+    <span class="org-keyword">return</span> <span class="org-constant">std</span>::stoul<span class="org-rainbow-delimiters-depth-2">(</span>p<span class="org-rainbow-delimiters-depth-2">)</span>;
+<span class="org-rainbow-delimiters-depth-1">}</span>
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Template specialization for double</span>
+<span class="org-keyword">template</span><span class="org-rainbow-delimiters-depth-1">&lt;&gt;</span>
+<span class="org-type">double</span>
+<span class="org-function-name">get_env_value</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-constant">std</span>::<span class="org-type">string</span> <span class="org-keyword">const</span>&amp; <span class="org-variable-name">name</span>, <span class="org-type">double</span> <span class="org-variable-name">default_value</span><span class="org-rainbow-delimiters-depth-1">)</span>
+<span class="org-rainbow-delimiters-depth-1">{</span>
+    <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">p</span> = <span class="org-constant">std</span>::getenv<span class="org-rainbow-delimiters-depth-2">(</span>name.c_str<span class="org-rainbow-delimiters-depth-3">()</span><span class="org-rainbow-delimiters-depth-2">)</span>;
+    <span class="org-keyword">if</span><span class="org-rainbow-delimiters-depth-2">(</span>p == <span class="org-constant">nullptr</span><span class="org-rainbow-delimiters-depth-2">)</span> <span class="org-rainbow-delimiters-depth-2">{</span> <span class="org-keyword">return</span> default_value; <span class="org-rainbow-delimiters-depth-2">}</span>
+    <span class="org-keyword">return</span> <span class="org-constant">std</span>::stod<span class="org-rainbow-delimiters-depth-2">(</span>p<span class="org-rainbow-delimiters-depth-2">)</span>;
+<span class="org-rainbow-delimiters-depth-1">}</span>
+
+
+<span class="org-type">int</span> <span class="org-function-name">main</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-type">int</span> <span class="org-variable-name">argc</span>, <span class="org-type">char</span>* <span class="org-variable-name">argv</span><span class="org-rainbow-delimiters-depth-2">[]</span><span class="org-rainbow-delimiters-depth-1">)</span>
+<span class="org-rainbow-delimiters-depth-1">{</span>
+    <span class="org-comment-delimiter">// </span><span class="org-comment">Check whether environment variable "PROGRAM_USER_KEY" is set</span>
+    <span class="org-keyword">if</span><span class="org-rainbow-delimiters-depth-2">(</span><span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">env</span> = <span class="org-constant">std</span>::getenv<span class="org-rainbow-delimiters-depth-3">(</span><span class="org-string">"PROGRAM_USER_KEY"</span><span class="org-rainbow-delimiters-depth-3">)</span><span class="org-rainbow-delimiters-depth-2">)</span>
+    <span class="org-rainbow-delimiters-depth-2">{</span>
+        <span class="org-constant">std</span>::cout &lt;&lt; <span class="org-string">" [1] Environment vartiable set =&gt; PROGRAM_USER_KEY = "</span>
+                  &lt;&lt; env &lt;&lt; <span class="org-constant">std</span>::endl;
+    <span class="org-rainbow-delimiters-depth-2">}</span> <span class="org-keyword">else</span> <span class="org-rainbow-delimiters-depth-2">{</span>
+        <span class="org-constant">std</span>::cout &lt;&lt;<span class="org-string">" [1] Environment variable PROGRAM_USER_KEY not set."</span> &lt;&lt; <span class="org-constant">std</span>::endl;
+    <span class="org-rainbow-delimiters-depth-2">}</span>
+
+
+    <span class="org-keyword">auto</span> <span class="org-variable-name">storage_path</span> = get_env_value<span class="org-rainbow-delimiters-depth-2">&lt;</span><span class="org-constant">std</span>::<span class="org-type">string</span><span class="org-rainbow-delimiters-depth-2">&gt;(</span><span class="org-string">"PROGRAM_STORAGE_PATH"</span>
+                                                   , <span class="org-string">"/home/dummy/.data"</span><span class="org-rainbow-delimiters-depth-2">)</span>;
+    <span class="org-keyword">auto</span> <span class="org-variable-name">number_of_threads</span> = get_env_value<span class="org-rainbow-delimiters-depth-2">&lt;</span><span class="org-type">size_t</span><span class="org-rainbow-delimiters-depth-2">&gt;(</span><span class="org-string">"PROGRAM_NTHREADS"</span>, 10<span class="org-rainbow-delimiters-depth-2">)</span>;
+    <span class="org-keyword">auto</span> <span class="org-variable-name">timeout</span> = get_env_value<span class="org-rainbow-delimiters-depth-2">&lt;</span><span class="org-type">double</span><span class="org-rainbow-delimiters-depth-2">&gt;(</span><span class="org-string">"PROGRAM_TIMEOUT"</span>, 1.0<span class="org-rainbow-delimiters-depth-2">)</span>;
+
+    <span class="org-constant">std</span>::cout &lt;&lt; <span class="org-string">" ==== Program Runtime Configuration ======="</span> &lt;&lt; <span class="org-constant">std</span>::endl;
+
+    <span class="org-constant">std</span>::cout &lt;&lt; <span class="org-string">" ENV[PROGRAM_STORAGE_PATH] = "</span> &lt;&lt; storage_path &lt;&lt; <span class="org-constant">std</span>::endl;
+    <span class="org-constant">std</span>::cout &lt;&lt; <span class="org-string">" ENV[PROGRAM_NTHREADS]     = "</span> &lt;&lt; number_of_threads &lt;&lt; <span class="org-constant">std</span>::endl;
+    <span class="org-constant">std</span>::cout &lt;&lt; <span class="org-string">" ENV[PROGRAM_TIMEOUT]      = "</span> &lt;&lt; timeout &lt;&lt; <span class="org-constant">std</span>::endl;
+
+    <span class="org-keyword">return</span> EXIT_SUCCESS;
+<span class="org-rainbow-delimiters-depth-1">}</span>
+</pre>
+</div>
+
+<p>
+Building: 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ g++ envvar.cpp -o <span class="org-keyword">envvars.bin</span> --std=c++1z -g -O0 -Wall -Wextra
+</pre>
+</div>
+
+<p>
+Running 1: 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ ./envvars.bin 
+ [1] Environment variable PROGRAM_USER_KEY not set.
+ ==== Program Runtime Configuration =======
+ ENV[PROGRAM_STORAGE_PATH] = /home/dummy/.data
+ ENV[PROGRAM_NTHREADS]     = 10
+ ENV[PROGRAM_TIMEOUT]      = 1
+</pre>
+</div>
+
+<p>
+Running 2: 
+</p>
+<ul class="org-ul">
+<li>Set PROGRAM_USER_KEY environment variable for the current terminal
+session.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ export <span class="org-variable-name">PROGRAM_USER_KEY</span>=87axk689fghyk
+
+$ ./envvars.bin 
+ [1] Environment vartiable set =&gt; PROGRAM_USER_KEY = 87axk689fghyk
+ ==== Program Runtime Configuration =======
+ ENV[PROGRAM_STORAGE_PATH] = /home/dummy/.data
+ ENV[PROGRAM_NTHREADS]     = 10
+ ENV[PROGRAM_TIMEOUT]      = 1
+
+
+$ export <span class="org-variable-name">PROGRAM_USER_KEY</span>=void_password
+
+$ ./envvars.bin 
+ [1] Environment vartiable set =&gt; PROGRAM_USER_KEY = void_password
+ ==== Program Runtime Configuration =======
+ ENV[PROGRAM_STORAGE_PATH] = /home/dummy/.data
+ ENV[PROGRAM_NTHREADS]     = 10
+ ENV[PROGRAM_TIMEOUT]      = 1
+</pre>
+</div>
+
+
+<p>
+Running 3: 
+</p>
+<ul class="org-ul">
+<li>Use the env <code>/usr/bin/env</code> for setting program environment variable.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ env <span class="org-variable-name">PROGRAM_NTHREADS</span>=15 ./envvars.bin 
+ [1] Environment vartiable set =&gt; PROGRAM_USER_KEY = void_password
+ ==== Program Runtime Configuration =======
+ ENV[PROGRAM_STORAGE_PATH] = /home/dummy/.data
+ ENV[PROGRAM_NTHREADS]     = 15
+ ENV[PROGRAM_TIMEOUT]      = 1
+
+$ ./envvars.bin 
+ [1] Environment vartiable set =&gt; PROGRAM_USER_KEY = void_password
+ ==== Program Runtime Configuration =======
+ ENV[PROGRAM_STORAGE_PATH] = /home/dummy/.data
+ ENV[PROGRAM_NTHREADS]     = 10
+ ENV[PROGRAM_TIMEOUT]      = 1
+
+</pre>
+</div>
+
+<p>
+Running 4: 
+</p>
+<ul class="org-ul">
+<li>Set multiple environment varaibles with "env" Unix program.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-sh">$ env <span class="org-variable-name">PROGRAM_TIMEOUT</span>=2.551 <span class="org-variable-name">PROGRAM_STORAGE_PATH</span>=/var/www ./envvars.bin 
+ [1] Environment vartiable set =&gt; PROGRAM_USER_KEY = void_password
+ ==== Program Runtime Configuration =======
+ ENV[PROGRAM_STORAGE_PATH] = /var/www
+ ENV[PROGRAM_NTHREADS]     = 10
+ ENV[PROGRAM_TIMEOUT]      = 2.551
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org62ac798" class="outline-3">
+<h3 id="org62ac798"><span class="section-number-3">1.3</span> C-legacy IO functions - format specifiers and examples</h3>
+<div class="outline-text-3" id="text-1-3">
+</div>
+<div id="outline-container-org5d057dc" class="outline-4">
+<h4 id="org5d057dc"><span class="section-number-4">1.3.1</span> Puts</h4>
+<div class="outline-text-4" id="text-1-3-1">
+<p>
+Print a string without any formatting - header: <a href="https://en.cppreference.com/w/cpp/header/cstdio">&lt;cstdio&gt;</a> for C++ and &lt;stdio.h&gt; for C.
+</p>
+
+<ul class="org-ul">
+<li>puts - print a line to stdout followed by new line character.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">puts</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-keyword">const</span> <span class="org-type">char</span>*<span class="org-rainbow-delimiters-depth-1">)</span>;
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>fputs - print line to file.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">fputs</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-type">FILE</span>* <span class="org-variable-name">fd</span>, <span class="org-keyword">const</span> <span class="org-type">char</span>*<span class="org-rainbow-delimiters-depth-1">)</span>;
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Example: print line to stdout - standard output</span>
+ <span class="org-constant">std</span>::fputs<span class="org-rainbow-delimiters-depth-1">(</span><span class="org-string">" =&gt; hello world C++17 line\n"</span>, stdout<span class="org-rainbow-delimiters-depth-1">)</span>;
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Exmaple: print line to stderr - standard error output </span>
+<span class="org-function-name">std</span>::fputs<span class="org-rainbow-delimiters-depth-1">(</span><span class="org-string">" =&gt; hello world C++17 line\n"</span>, stderr<span class="org-rainbow-delimiters-depth-1">)</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga4facc6" class="outline-4">
+<h4 id="orga4facc6"><span class="section-number-4">1.3.2</span> Printf-like Functions</h4>
+<div class="outline-text-4" id="text-1-3-2">
+<p>
+The following functions are available in the header <a href="https://en.cppreference.com/w/cpp/header/cstdio">&lt;cstdio&gt;</a> for C++,
+and in the header &lt;stdio.h&gt; for C. 
+</p>
+
+<ul class="org-ul">
+<li>Printf - print to stdout - standard output.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">printf</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">format</span>, ...<span class="org-rainbow-delimiters-depth-1">)</span>;
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>fprintf - print to file
+<ul class="org-ul">
+<li>stdout - file =&gt; standard output</li>
+<li>stderr - file =&gt; standard error output.</li>
+</ul></li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">fprintf</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-type">FILE</span>* <span class="org-variable-name">fd</span>, <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">format</span>, ...<span class="org-rainbow-delimiters-depth-1">)</span>; 
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Example: Print to stdout, same as printf </span>
+<span class="org-function-name">std</span>::fprintf<span class="org-rainbow-delimiters-depth-1">(</span>stdout, <span class="org-string">" text = '%s' x = %.3f "</span>, <span class="org-string">"square_root"</span>, 3.141598714<span class="org-rainbow-delimiters-depth-1">)</span>; 
+
+<span class="org-comment-delimiter">// </span><span class="org-comment">Example: Print to stderr</span>
+<span class="org-function-name">std</span>::fprintf<span class="org-rainbow-delimiters-depth-1">(</span>stderr, <span class="org-string">" text = '%s' x = %.3f "</span>, <span class="org-string">"square_root"</span>, 3.141598714<span class="org-rainbow-delimiters-depth-1">)</span>; 
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>dprintf - print to file descriptor</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">dprintf</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-type">int</span> <span class="org-variable-name">fd</span>, <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">format</span>, ...<span class="org-rainbow-delimiters-depth-1">)</span>;
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>sprintf - print to buffer - Note: function prone to buffer
+overlflow.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">sprintf</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-type">char</span>* <span class="org-variable-name">buffer</span>, <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">format</span>, ...<span class="org-rainbow-delimiters-depth-1">)</span>; 
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>snprintf - print to buffer with bound checking - size is the
+maximum number of characters that can be print to the buffer.</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-type">int</span> <span class="org-function-name">snprintf</span><span class="org-rainbow-delimiters-depth-1">(</span><span class="org-type">char</span>* <span class="org-variable-name">buffer</span>, <span class="org-type">size_t</span> <span class="org-variable-name">size</span>, <span class="org-keyword">const</span> <span class="org-type">char</span>* <span class="org-variable-name">format</span>, ...<span class="org-rainbow-delimiters-depth-1">)</span>;
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf863383" class="outline-4">
+<h4 id="orgf863383"><span class="section-number-4">1.3.3</span> Specifiers for printf-like functions</h4>
+<div class="outline-text-4" id="text-1-3-3">
+<p>
+Escacape sequences: 
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Sequence</th>
+<th scope="col" class="org-left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left"><b>New Line</b></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left"><code>\n</code></td>
+<td class="org-left">LF - Line Feed (Unix new line )</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>\r</code></td>
+<td class="org-left">CR - Carriage Return</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left"><b>Tabs</b></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left"><code>\t</code></td>
+<td class="org-left">Horizontal Tab</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>\v</code></td>
+<td class="org-left">Vertical Tab</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left"><b>Escape Characters</b></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left">%%</td>
+<td class="org-left">Print a percent sign (%)</td>
+</tr>
+
+<tr>
+<td class="org-left">\\</td>
+<td class="org-left">Print backlash, aka backward slash</td>
+</tr>
+
+<tr>
+<td class="org-left">\"</td>
+<td class="org-left">Print a single double quote</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left"><b>Special Characters</b></td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left"><code>\a</code></td>
+<td class="org-left">Alert bell</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>\b</code></td>
+<td class="org-left">Backspace</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>\c</code></td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>\f</code></td>
+<td class="org-left">Form feed</td>
+</tr>
+
+<tr>
+<td class="org-left"><code>\e</code></td>
+<td class="org-left">Escape</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+Specifiers: 
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Specifier</th>
+<th scope="col" class="org-left">Description - Format Specifier for type:</th>
+<th scope="col" class="org-left">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left"><b>Misc</b></td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left">%c</td>
+<td class="org-left">char - single character</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%s</td>
+<td class="org-left">char* or const char*</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%p</td>
+<td class="org-left">void* - Print address stored in a pointer in hexadecimal format.</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left"><b>Integers</b></td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left">%u</td>
+<td class="org-left">unsigned integer</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%d  or %i</td>
+<td class="org-left">int - signed integer in decimal base</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%o</td>
+<td class="org-left">int - signed integer in octal base</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%x</td>
+<td class="org-left">int - signed integer in hexadecimal base (lower case)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%X</td>
+<td class="org-left">int - signed integer in hexadecimal base (upper case)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left"><b>Long Types</b></td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left">%ld</td>
+<td class="org-left">'long' or 'long int' in decimal format</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%lx</td>
+<td class="org-left">'long' or 'long int' in hex format (lower case)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%lX</td>
+<td class="org-left">'long' or 'long int' in hex format (upper case)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%lu</td>
+<td class="org-left">'unsigned long' or 'size_t' in decimal format</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%zx</td>
+<td class="org-left">'unsigned long' or 'size_t' in hex format (lower case)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%zX</td>
+<td class="org-left">'unsigned long' or 'size_t' in hex format (upper case)</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%lld</td>
+<td class="org-left">'long long' or 'long long int' in decimal format</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%llu</td>
+<td class="org-left">'unsigned long long'</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left"><b>Float Point</b></td>
+<td class="org-left">For float, double, and long double</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td class="org-left">%f</td>
+<td class="org-left">Print using standard notation</td>
+<td class="org-left">12391.647808</td>
+</tr>
+
+<tr>
+<td class="org-left">%a</td>
+<td class="org-left">Print using hexadecimal notation</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%e</td>
+<td class="org-left">Print using scientific notation (lower case 'e)</td>
+<td class="org-left">1.239165e+04</td>
+</tr>
+
+<tr>
+<td class="org-left">%E</td>
+<td class="org-left">Print using scientific notation (upper case 'E')</td>
+<td class="org-left">1.239165E+04</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%g</td>
+<td class="org-left">Print using scientific notation only when needed (lower case 'e')</td>
+<td class="org-left">1.239165e+04</td>
+</tr>
+
+<tr>
+<td class="org-left">%G</td>
+<td class="org-left">Print using scientific notation only when needed (upper case 'E')</td>
+<td class="org-left">1.239165E+04</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-left">%.3f</td>
+<td class="org-left">Print using std. notation with 3 digits precision</td>
+<td class="org-left">12391.649</td>
+</tr>
+
+<tr>
+<td class="org-left">%.3E</td>
+<td class="org-left">Print using scientific notation with 3 digits precision</td>
+<td class="org-left">1.240E+04</td>
+</tr>
+
+<tr>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+<td class="org-left">&#xa0;</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+WARNING: Despite the simplicity, printf is not type-safe and has some
+potential vulnerabilities:
+</p>
+
+<ul class="org-ul">
+<li><a href="https://en.wikipedia.org/wiki/Uncontrolled_format_string">Uncontrolled format string</a></li>
+<li><a href="https://www.owasp.org/index.php/Format_string_attack">Format string attack</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgd807ea7" class="outline-4">
+<h4 id="orgd807ea7"><span class="section-number-4">1.3.4</span> Examples</h4>
+<div class="outline-text-4" id="text-1-3-4">
+<p>
+Headers:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-cpp"><span class="org-comment-delimiter">// </span><span class="org-comment">For C use &lt;stdio.h&gt;</span>
+<span class="org-preprocessor">#include</span> <span class="org-string"><span class="org-rainbow-delimiters-depth-1">&lt;</span></span><span class="org-string">cstdio</span><span class="org-string"><span class="org-rainbow-delimiters-depth-1">&gt;</span></span>  <span class="org-comment-delimiter">// </span><span class="org-comment">for printf</span>
+<span class="org-preprocessor">#include</span> <span class="org-string"><span class="org-rainbow-delimiters-depth-1">&lt;</span></span><span class="org-string">cmath</span><span class="org-string"><span class="org-rainbow-delimiters-depth-1">&gt;</span></span>   <span class="org-comment-delimiter">// </span><span class="org-comment">sin, cos, exp</span>
+</pre>
+</div>
